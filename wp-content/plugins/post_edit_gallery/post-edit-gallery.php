@@ -91,6 +91,13 @@ function myshortcode_gallery_data( $atts ) {
 	), $atts );
 
 	$url = wp_get_attachment_image_url($params['ids']);
-	return "<img src='{$url}' class='{$params['template']}'>";
+
+	$html = "<img src='{$url}' class='my_gallery_img'>";
+	if ($params['template']=='template_1') {
+		$html = "<div class='first_template'>". $html ."</div>";
+	} elseif ($params['template']=='template_2') {
+		$html = "<div class='second_template'>". $html ."</div>";
+	}
+	return $html;
 }
 add_shortcode( 'gallery', 'myshortcode_gallery_data' );
