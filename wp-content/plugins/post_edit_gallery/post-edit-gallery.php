@@ -41,7 +41,7 @@ add_action('media_buttons', 'add_upload_img_media_button', 11);
  * @param $form_fields array, fields to include in attachment form
  * @param $post object, attachment record in database
  * @return $form_field, modified form field
- */
+ *
 function my_attachment_field_template( $form_fields, $post ) {
 	$field = 'img_template';
 	$meta = get_post_meta( $post->ID, '_' . $field, true );
@@ -65,7 +65,7 @@ function my_attachment_field_template( $form_fields, $post ) {
 	return $form_fields;
 }
 
-add_filter( 'attachment_fields_to_edit', 'my_attachment_field_template', 10, 2 );
+add_filter( 'attachment_fields_to_edit', 'my_attachment_field_template', 10, 2 );*/
 
 /**
  * Save values of template field in media uploader
@@ -73,7 +73,7 @@ add_filter( 'attachment_fields_to_edit', 'my_attachment_field_template', 10, 2 )
  * @param $post array, the post data
  * @param $attachment array, attachment fields from $_POST form
  * @return $post array, modified post data
- */
+ *
 function my_attachment_field_template_save( $post, $attachment ) {
 	$field = 'img_template';
 	if( isset( $attachment[$field] ) )
@@ -81,7 +81,7 @@ function my_attachment_field_template_save( $post, $attachment ) {
 	return $post;
 }
 
-add_filter( 'attachment_fields_to_save', 'my_attachment_field_template_save', 10, 2 );
+add_filter( 'attachment_fields_to_save', 'my_attachment_field_template_save', 10, 2 );*/
 
 
 function myshortcode_gallery_data( $atts ) {
@@ -90,9 +90,13 @@ function myshortcode_gallery_data( $atts ) {
 		'template' => 'template_1',
 	), $atts );
 
-	$url = wp_get_attachment_image_url($params['ids']);
+	$html = "";
+	$ids = explode(",", $params['ids']);
+	foreach ($ids as $id) {
+		$url = wp_get_attachment_image_url($id);
+		$html .= "<img src='{$url}' class='my_gallery_img'>";
+	}
 
-	$html = "<img src='{$url}' class='my_gallery_img'>";
 	if ($params['template']=='template_1') {
 		$html = "<div class='first_template'>". $html ."</div>";
 	} elseif ($params['template']=='template_2') {
@@ -101,3 +105,41 @@ function myshortcode_gallery_data( $atts ) {
 	return $html;
 }
 add_shortcode( 'gallery', 'myshortcode_gallery_data' );
+
+add_action('print_media_templates', function(){
+	?>
+	<script type="text/html" id="tmpl-custom-gallery-setting">
+		<h3>Custom Settings</h3>
+
+		<label class="setting">
+			<span><?php _e('Gallery template'); ?></span>
+			<select data-setting="img_template" name="img_template" id="img_template">
+				<option value="template_1"> 'Template 1' </option>
+				<option value="template_2"> 'Template 2' </option>
+			</select>
+		</label>
+
+	</script>
+
+	<?php
+});
+
+// define the media_view_settings callback
+function filter_media_view_settings( $settings, $post ) {
+	$imageIdsArray = json_decode(get_post_meta($post->ID, “_gallery_medias_ids”, true));
+
+	if( !empty( $imageIdsArray ) ) {
+		$imageIds = implode(',', $imageIdsArray);
+		$shortcode = '[gallery ids="'. $imageIds .'" template="'. $settings['img_template'] .'"]';
+		$settings['myGallery'] = array(‘shortcode’ => $shortcode);
+	}
+
+	return $settings;
+};
+
+add_filter( 'media_view_settings', 'filter_media_view_settings', 10, 2 );
+
+function wp_ajax_my_gallery_update(){
+
+}
+add_action( 'wp_ajax_my-gallery-update', 'wp_ajax_my_gallery_update', 1);
